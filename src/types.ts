@@ -7,10 +7,10 @@ export interface ValueRange {
 
 export type ValueFunction = (x: number) => number;
 
-export interface PointsFunction {
+export interface PointsFunction<T = Pos> {
   update: (xRange: ValueRange) => void;
-  first: () => Pos;
-  secondGenerator: () => Generator<Pos>;
+  first: () => T;
+  secondGenerator: () => Generator<T>;
 }
 
 export interface FunctionOptions {

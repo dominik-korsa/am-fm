@@ -1,4 +1,4 @@
-import type {PointsFunction, Pos, ValueFunction} from "@/types";
+import type {PointsFunction, ValueFunction} from "@/types";
 import {Queue} from "@/queue";
 import {average, lerp, square} from "@/utils";
 
@@ -7,26 +7,23 @@ export const getFrequencyTransform = (carrierFrequency: number, min: number): Va
   return (value) => carrierFrequency * lerp(square((value + 1) / 2), {min, max});
 };
 
-export const getFmSignalFunction = (
-  sound: ValueFunction,
-  getSoundFrequency: ValueFunction,
+export const getPointsFunction = <PointY>(
+  computeNext: (prevX: number, x: number) => PointY,
+  resetState: () => PointY,
   step: number,
-): PointsFunction => {
-  let queue: Queue<Pos>;
-  let phase = 0;
+): PointsFunction<[number, PointY]> => {
+  let queue: Queue<[number, PointY]>;
   return {
     update: (range) => {
       if (!queue || queue.first()[0] > range.min) {
-        queue = new Queue<Pos>([ range.min, sound(range.min) ]);
+        queue = new Queue<[number, PointY]>([ range.min, resetState() ]);
       }
 
       while (true) {
         const [prevX] = queue.last();
         if (prevX > range.max) break;
         const x = prevX + step;
-        const frequency = getSoundFrequency(average(sound(prevX), sound(x)));
-        phase += step * frequency * 2 * Math.PI;
-        queue.pushBack([x, Math.sin(phase)]);
+        queue.pushBack([x, computeNext(prevX, x)]);
       }
       while (true) {
         const pos = queue.second();
@@ -43,4 +40,24 @@ export const getFmSignalFunction = (
       return queue.secondGenerator();
     },
   };
+}
+
+export const getFmSignalFunction = (
+  sound: ValueFunction,
+  getSoundFrequency: ValueFunction,
+  step: number,
+): PointsFunction => {
+  let phase = 0;
+  return getPointsFunction<number>(
+    (prevX, x) => {
+      const frequency = getSoundFrequency(average(sound(prevX), sound(x)));
+      phase += step * frequency * 2 * Math.PI;
+      return Math.sin(phase);
+    },
+    () => {
+      phase = 0;
+      return 0;
+    },
+    step,
+  );
 };

@@ -2,6 +2,7 @@
   <function-card :label="`Kanał ${channel.frequency} Hz`" class="w-0 grow">
     <function-graph :config="soundConfig" />
     <function-graph :config="amSignalConfig" class="mt-2" />
+    <function-graph :config="fmSignalConfig" class="mt-2" />
   </function-card>
 </template>
 <script setup lang="ts">
@@ -10,6 +11,7 @@ import type {Channel} from "@/types";
 import {computed} from "vue";
 import {GraphConfig} from "@/types";
 import FunctionGraph from "@/components/FunctionGraph.vue";
+import {getFmSignalFunction, getFrequencyTransform} from "@/functions/fm-signal";
 
 const props = defineProps<{
   channel: Channel;
@@ -47,6 +49,27 @@ const amSignalConfig = computed<GraphConfig>(() => ({
     { y: 0 },
     { y: -1 },
     { y: -2 },
+  ],
+}));
+
+const fmSignalConfig = computed<GraphConfig>(() => ({
+  functions: [
+    {
+      function: getFmSignalFunction(
+        props.channel.sound,
+        getFrequencyTransform(props.channel.frequency, 0.5),
+        0.01
+      ),
+    },
+  ],
+  getMaxX: props.getMaxX,
+  unitWidth,
+  unitHeight: 20,
+  yRange: { min: -1, max: 1 },
+  baselines: [
+    { y: 1 },
+    { y: 0 },
+    { y: -1 },
   ],
 }));
 </script>

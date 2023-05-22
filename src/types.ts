@@ -41,3 +41,10 @@ export interface MaxXGraphConfig extends BaseGraphConfig {
 }
 
 export type GraphConfig = XRangeGraphConfig | MaxXGraphConfig;
+
+export interface Channel {
+  frequency: number;
+  sound: ValueFunction;
+  carrier: ValueFunction;
+  amSignal: ValueFunction;
+}

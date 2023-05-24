@@ -1,6 +1,6 @@
 import type {PointsFunction, ValueFunction} from "@/types";
 import {Queue} from "@/queue";
-import {average, lerp, square} from "@/utils";
+import {average, lerp, mapObject, square} from "@/utils";
 
 export const getFrequencyTransform = (carrierFrequency: number, min: number): ValueFunction => {
   const max = 4 - 3 * min;
@@ -57,6 +57,55 @@ export const getFmSignalFunction = (
     () => {
       phase = 0;
       return 0;
+    },
+    step,
+  );
+};
+
+interface BaseChannel {
+  sound: ValueFunction,
+  getSoundFrequency: ValueFunction,
+}
+
+interface FullChannel extends BaseChannel {
+  phase: number;
+}
+
+interface MultipleChannelsResult<Key extends string> {
+  values: Record<Key, number>;
+  sum: number;
+}
+
+export const getMultipleFmSignalFunction = <Key extends string>(
+  channels: Record<Key, BaseChannel>,
+  step: number,
+) => {
+  const mappedChannels = mapObject(channels, (channel): FullChannel => ({
+    ...channel,
+    phase: 0,
+  }));
+  return getPointsFunction<MultipleChannelsResult<Key>>(
+    (prevX, x) => {
+      let sum = 0;
+      return {
+        values: mapObject(mappedChannels, (channel) => {
+          const frequency = channel.getSoundFrequency(average(channel.sound(prevX), channel.sound(x)));
+          channel.phase += step * frequency * 2 * Math.PI
+          const value = Math.sin(channel.phase);
+          sum += value;
+          return value;
+        }),
+        sum,
+      }
+    },
+    () => {
+      Object.values<FullChannel>(mappedChannels).forEach((channel) => {
+        channel.phase = 0;
+      });
+      return {
+        values: mapObject(mappedChannels, () => 0),
+        sum: 0,
+      };
     },
     step,
   );

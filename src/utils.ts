@@ -46,3 +46,15 @@ export const getValue = <T extends number | object | string | boolean>(
 export const sinX: ValueFunction = (x) => Math.sin(x * 2 * Math.PI);
 
 export const listIf = <T>(condition: boolean, ...values: T[]) => condition ? values : [];
+
+export const mapObject = <Key extends string, Source, Target>(
+  src: Record<Key, Source>,
+  callback: (value: Source, key: Key) => Target,
+) => Object.fromEntries(
+  Object.entries(src).map(
+    (entry) => [
+      entry[0],
+      callback(entry[1] as Source, entry[0] as Key),
+    ],
+  ),
+) as Record<Key, Target>;

@@ -6,10 +6,10 @@
     <function-card label="Dźwięk" class="mt-4">
       <function-graph :config="soundConfig" @click.prevent="changeSound()" class="cursor-pointer" />
     </function-card>
-    <function-card label="Fala AM" class="mt-4">
+    <function-card label="Fala AM" class="mt-4" :header-click="changeMode" v-if="mode.am">
       <function-graph :config="amSignalConfig" @click="toggleSoundOnSignal()" class="cursor-pointer" />
     </function-card>
-    <function-card label="Fala FM" class="mt-4">
+    <function-card label="Fala FM" class="mt-4" :header-click="changeMode" v-if="mode.fm">
       <function-graph :config="fmSignalConfig" />
     </function-card>
   </main>
@@ -29,6 +29,11 @@ const { state: frequency, next: changeFrequency } = useCycleList([0.5, 1, 1.5, 2
   initialValue: 1.5,
 });
 const { state: soundType, next: changeSound } = useCycleList(soundTypes);
+const { state: mode, next: changeMode } = useCycleList([
+  { am: true, fm: true },
+  { am: true, fm: false },
+  { am: false, fm: true },
+]);
 const getMaxX = useGetMaxX();
 const channel = computed(() => getChannel(soundType.value, frequency.value));
 
@@ -70,7 +75,8 @@ const [showSoundOnSignal, toggleSoundOnSignal] = useToggle(false);
 const amSignalConfig = computed<GraphConfig>(() => ({
   functions: [
     ...listIf<FunctionOptions>(showSoundOnSignal.value,
-      { function: (x) => channel.value.sound(x) + 1, color: '#3A7E70' }
+      { function: (x) => channel.value.sound(x) + 1, color: '#3A7E70' },
+      { function: (x) => -channel.value.sound(x) - 1, color: '#3A7E7066' },
     ),
     { function: channel.value.amSignal },
   ],
